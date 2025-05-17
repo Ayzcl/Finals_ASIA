@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config(); // load .env file
 
@@ -26,8 +27,16 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) throw err;
-  console.log('✅ Connected to MySQL database');
+  console.log('Connected to MySQL database');
 });
+
+// Rate limiting middleware
+const limiter = rateLimit({
+  windowMs: 2 * 60 * 1000, // 2 minutes
+  max: 100, // Limit each IP to 10 requests per windowMs
+  message: 'Too many requests, please try again later.',
+})
+app.use(limiter);
 
 // Start server
 app.listen(port, () => {
@@ -38,7 +47,6 @@ app.listen(port, () => {
 app.get('/ping', (req, res) => {
   res.send('pong');
 });
-
 
 // Register
 app.post('/register', async (req, res) => {
@@ -115,7 +123,6 @@ function authenticateToken(req, res, next) {
   });
 }
 
-  
 // Retrieve all blog posts
 app.get('/posts', authenticateToken, (req, res) => {
     const sql = 'SELECT * FROM blog_tbl';
@@ -127,6 +134,7 @@ app.get('/posts', authenticateToken, (req, res) => {
       res.status(200).json(results);
     });
   });
+
 // Retrieve specific blog post
 app.get('/posts/:id', authenticateToken, (req, res) => {
   const sql = 'SELECT * FROM blog_tbl WHERE id = ?';
@@ -136,6 +144,7 @@ app.get('/posts/:id', authenticateToken, (req, res) => {
     res.status(200).json(results[0]);
   });
 });
+
 // Create new post
 app.post('/posts', authenticateToken, (req, res) => {
   const { title, content, author } = req.body;

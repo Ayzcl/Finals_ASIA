@@ -102,3 +102,22 @@ app.post('/login', (req, res) => {
     );
   });
   
+//Retrieve all blog posts
+app.get('/posts', authenticateToken, (req, res) => {
+    db.query('SELECT * FROM posts', (err, results) => {
+      if (err) return res.status(500).send(err);
+      res.json(results);
+    });
+  });
+
+// Retrieve specific blog
+app.get('/posts/:id', authenticateToken, (req, res) => {
+    db.query('SELECT * FROM posts WHERE id = ?', [req.params.id], (err, results) => {
+      if (err) return res.status(500).send(err);
+      if (results.length === 0) return res.status(404).send({ message: 'Post not found' });
+      res.json(results[0]);
+    });
+  });
+
+  
+

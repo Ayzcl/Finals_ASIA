@@ -29,6 +29,8 @@ connection.connect((err) => {
   console.log('✅ Connected to MySQL database');
 });
 
+
+
 // Start server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
@@ -38,6 +40,7 @@ app.listen(port, () => {
 app.get('/ping', (req, res) => {
   res.send('pong');
 });
+
 
 // ✅ REGISTER ROUTE
 app.post('/register', async (req, res) => {
@@ -101,50 +104,68 @@ app.post('/login', (req, res) => {
       }
     );
   });
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ message: 'Token required' });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+}
+
   
-//Retrieve all blog posts
+// Retrieve all blog posts
 app.get('/posts', authenticateToken, (req, res) => {
-    db.query('SELECT * FROM posts', (err, results) => {
-      if (err) return res.status(500).send(err);
-      res.json(results);
+    const sql = 'SELECT * FROM blog_tbl';
+  
+    connection.query(sql, (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: 'Database error', error: err });
+      }
+      res.status(200).json(results);
     });
   });
+// // Retrieve specific blog post
+// app.get('/posts/:id', authenticateToken, (req, res) => {
+//     db.query('SELECT * FROM posts WHERE id = ?', [req.params.id], (err, results) => {
+//       if (err) return res.status(500).send(err);
+//       if (results.length === 0) return res.status(404).send({ message: 'Post not found' });
+//       res.json(results[0]);
+//     });
+//   });
 
-// Retrieve specific blog post
-app.get('/posts/:id', authenticateToken, (req, res) => {
-    db.query('SELECT * FROM posts WHERE id = ?', [req.params.id], (err, results) => {
-      if (err) return res.status(500).send(err);
-      if (results.length === 0) return res.status(404).send({ message: 'Post not found' });
-      res.json(results[0]);
-    });
-  });
+// // Create new blog post
+// app.post('/posts', authenticateToken, (req, res) => {
+//     const { title, content, author } = req.body;
+//     const sql = 'INSERT INTO posts (title, content, author) VALUES (?, ?, ?)';
+//     db.query(sql, [title, content, author], (err, result) => {
+//       if (err) return res.status(500).send(err);
+//       res.status(201).json({ id: result.insertId, title, content, author });
+//     });
+//   });
 
-// Create new blog post
-app.post('/posts', authenticateToken, (req, res) => {
-    const { title, content, author } = req.body;
-    const sql = 'INSERT INTO posts (title, content, author) VALUES (?, ?, ?)';
-    db.query(sql, [title, content, author], (err, result) => {
-      if (err) return res.status(500).send(err);
-      res.status(201).json({ id: result.insertId, title, content, author });
-    });
-  });
+// // Update an existing blog post
+// app.put('/posts/:id', authenticateToken, (req, res) => {
+//     const { title, content, author } = req.body;
+//     const sql = 'UPDATE posts SET title = ?, content = ?, author = ? WHERE id = ?';
+//     db.query(sql, [title, content, author, req.params.id], (err) => {
+//       if (err) return res.status(500).send(err);
+//       res.json({ id: req.params.id, title, content, author });
+//     });
+//   });
 
-// Update an existing blog post
-app.put('/posts/:id', authenticateToken, (req, res) => {
-    const { title, content, author } = req.body;
-    const sql = 'UPDATE posts SET title = ?, content = ?, author = ? WHERE id = ?';
-    db.query(sql, [title, content, author, req.params.id], (err) => {
-      if (err) return res.status(500).send(err);
-      res.json({ id: req.params.id, title, content, author });
-    });
-  });
+// // Delete blog post
+// app.delete('/posts/:id', authenticateToken, (req, res) => {
+//     db.query('DELETE FROM posts WHERE id = ?', [req.params.id], (err) => {
+//       if (err) return res.status(500).send(err);
+//       res.json({ message: 'Post has been deleted', id: req.params.id });
+//     });
+//   });
 
-// Delete blog post
-app.delete('/posts/:id', authenticateToken, (req, res) => {
-    db.query('DELETE FROM posts WHERE id = ?', [req.params.id], (err) => {
-      if (err) return res.status(500).send(err);
-      res.json({ message: 'Post has been deleted', id: req.params.id });
-    });
-  });
 
 

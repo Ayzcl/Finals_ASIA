@@ -136,6 +136,39 @@ app.get('/posts/:id', authenticateToken, (req, res) => {
     res.status(200).json(results[0]);
   });
 });
+// Create new post
+app.post('/posts', authenticateToken, (req, res) => {
+  const { title, content, author } = req.body;
+  const sql = 'INSERT INTO blog_tbl (title, content, author) VALUES (?, ?, ?)';
+  connection.query(sql, [title, content, author], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Database error', error: err });
+    res.status(201).json({ message: 'Post created', postId: result.insertId });
+  });
+});
+
+// Update existing post
+app.put('/posts/:id', authenticateToken, (req, res) => {
+  const { title, content, author } = req.body;
+  const sql = 'UPDATE blog_tbl SET title = ?, content = ?, author = ? WHERE id = ?';
+  connection.query(sql, [title, content, author, req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Database error', error: err });
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Post not found' });
+    res.status(200).json({ message: 'Post updated' });
+  });
+});
+
+// Delete a post
+app.delete('/posts/:id', authenticateToken, (req, res) => {
+  const sql = 'DELETE FROM blog_tbl WHERE id = ?';
+  connection.query(sql, [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Database error', error: err });
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Post not found' });
+    res.status(200).json({ message: 'Post deleted' });
+  });
+});
+
+
+
 
 
 

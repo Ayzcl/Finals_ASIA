@@ -143,8 +143,8 @@ app.put('/posts/:id', authenticateToken, (req, res) => {
 app.delete('/posts/:id', authenticateToken, (req, res) => {
     db.query('DELETE FROM posts WHERE id = ?', [req.params.id], (err) => {
       if (err) return res.status(500).send(err);
-      res.json({ message: 'Post deleted', id: req.params.id });
+      res.json({ message: 'Post has been deleted', id: req.params.id });
     });
   });
 
-  
+

@@ -110,7 +110,7 @@ app.get('/posts', authenticateToken, (req, res) => {
     });
   });
 
-// Retrieve specific blog
+// Retrieve specific blog post
 app.get('/posts/:id', authenticateToken, (req, res) => {
     db.query('SELECT * FROM posts WHERE id = ?', [req.params.id], (err, results) => {
       if (err) return res.status(500).send(err);
@@ -119,7 +119,7 @@ app.get('/posts/:id', authenticateToken, (req, res) => {
     });
   });
 
-// Create new blog
+// Create new blog post
 app.post('/posts', authenticateToken, (req, res) => {
     const { title, content, author } = req.body;
     const sql = 'INSERT INTO posts (title, content, author) VALUES (?, ?, ?)';
@@ -129,3 +129,14 @@ app.post('/posts', authenticateToken, (req, res) => {
     });
   });
 
+// Update an existing blog post
+app.put('/posts/:id', authenticateToken, (req, res) => {
+    const { title, content, author } = req.body;
+    const sql = 'UPDATE posts SET title = ?, content = ?, author = ? WHERE id = ?';
+    db.query(sql, [title, content, author, req.params.id], (err) => {
+      if (err) return res.status(500).send(err);
+      res.json({ id: req.params.id, title, content, author });
+    });
+  });
+
+  
